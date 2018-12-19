@@ -13,13 +13,15 @@
 								<el-table-column prop="price" label="价格">
 								</el-table-column>
 								<el-table-column prop="operation" label="操作">
-									<template scope="scope">
+									<template slot-scope="scope">
 										<el-button class="btns" @click="add(scope.row)" type="text" size="small">增加</el-button>
-										<el-button class="btns" type="text" size="small">减少</el-button>
+										<el-button class="btns" type="text" size="small" @click="decrease(scope.row)">减少</el-button>
 										<el-button class="btns" @click="del(scope.row)" type="text" size="small">删除</el-button>
 									</template>
 								</el-table-column>
 							</el-table>
+
+							<p>总量<span>{{total.totalCount}}</span> 总价<span>{{total.totalMoney}}</span></p>
 							<div style="margin-left: 15rem;">
 								<el-button type="success" @click="deleAll">删除</el-button>
 								<el-button type="danger">挂单</el-button>
@@ -158,6 +160,22 @@
 
 			}
 		},
+		computed: {
+			total() {
+				this.totalCount = 0;
+				this.totalMoney = 0;
+				if(this.tableData) {
+					this.tableData.forEach((element) => {
+						this.totalCount += element.count;
+						this.totalMoney = this.totalMoney + (element.price * element.count);
+					});
+				}
+				return {
+					"totalCount": this.totalCount,
+					"totalMoney": this.totalMoney
+				};
+			}
+		},
 		methods: {
 			//读取常用商品列表
 			goodsList() {
@@ -182,63 +200,74 @@
 				})
 
 			},
-
+			test(obj) {
+				console.log("---------------------->")
+				console.log(obj)
+				this.add(obj.row)
+			},
 			add(goods) {
-				this.totalCount = 0; //汇总数量清0
-				this.totalMoney = 0;
-				let isHave = false;
-				//判断是否这个商品已经存在于订单列表
-				for(let i = 0; i < this.tableData.length; i++) {
-					console.log(this.tableData[i].goodsId);
-					if(this.tableData[i].goodsId == goods.goodsId) {
-						isHave = true; //存在
-					}
-				}
-				//根据isHave的值判断订单列表中是否已经有此商品
-				if(isHave) {
-					//存在就进行数量添加
-					let arr = this.tableData.filter(o => o.goodsId == goods.goodsId);
-					arr[0].count++;
-					//console.log(arr);
+//				console.log(this.tableData)
+				var arr = this.tableData.filter((ele) => goods.goodsId == ele.goodsId);
+				if(arr.length > 0) {
+					//					debugger
+					this.tableData.forEach((Element) => {
+						if(goods.goodsId == Element.goodsId) {
+							Element.count++
+						}
+					})
+
 				} else {
-					//不存在就推入数组
-					let newGoods = {
-						goodsId: goods.goodsId,
-						goodsName: goods.goodsName,
-						price: goods.price,
-						count: 1
-					};
-					this.tableData.push(newGoods);
+					var obj = {
+						'goodsName': goods.goodsName,
+						'price': goods.price,
+						'count': 1,
+						'goodsId': goods.goodsId
+					}
+					this.tableData.push(obj)
 
 				}
 
 				//进行数量和价格的汇总计算
-				this.tableData.forEach((element) => {
-					this.totalCount += element.count;
-					this.totalMoney = this.totalMoney + (element.price * element.count);
-				});
+				//				this.tableData.forEach((element) => {
+				//					this.totalCount += element.count;
+				//					this.totalMoney = this.totalMoney + (element.price * element.count);
+				//				});
 			},
+			decrease(goods) {
+//				debugger
+				if(goods.count > 1) {
+					this.tableData.forEach((Element) => {
+						if(goods.goodsId==Element.goodsId){
+							Element.count--;
+						}
+					})
 
+				}else{
+					console.log(8888)
+					this.del(goods)
+					
+					
+				}
+
+			},
 			del(goods) {
-				this.tableData = this.tableData.filter(o => o.goodsId != goods.goodsId);
-				this.getTatalMoney();
+				var arr=[];
+				this.tableData.forEach((Element)=>{
+					if(goods.goodsId!=Element.goodsId){
+						arr.push(Element)
+					}
+					
+				})
+				this.tableData=arr;
+				
 			},
 
 			getTatalMoney() {
-				this.totalCount = 0;
-				this.totalMoney = 0;
-				if(this.tableData) {
-					this.tableData.forEach((element) => {
-						this.totalCount += element.count;
-						this.totalMoney = this.totalMoney + (element.price * element.count);
-					});
-				}
+
 			},
 
 			deleAll() {
-				this.totalCount = 0;
-				this.totalMoney = 0;
-				this.tableData = [];
+
 			}
 
 		}
@@ -246,7 +275,7 @@
 	}
 </script>
 
-<style scoped>
+<style>
 	.main-right {
 		width: 95rem;
 		float: left;
